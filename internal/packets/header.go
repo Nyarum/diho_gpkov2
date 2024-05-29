@@ -1,6 +1,7 @@
 package packets
 
 import (
+	"bytes"
 	"encoding/binary"
 
 	utils "github.com/Nyarum/diho_bytes_generate/utils"
@@ -8,18 +9,21 @@ import (
 )
 
 type PacketEncodeInterface interface {
-	SetHeaderLen(len uint16)
+	Opcode() uint16
+	SetHeader(len, opcode uint16)
 	EncodeHeader(endian binary.ByteOrder) ([]byte, error)
 	Encode(endian binary.ByteOrder) ([]byte, error)
 }
 
 type Header struct {
-	Len uint16
-	ID  uint32
+	Len    uint16
+	ID     uint32
+	Opcode uint16
 }
 
-func (h *Header) SetHeaderLen(len uint16) {
+func (h *Header) SetHeader(len, opcode uint16) {
 	h.Len = len
+	h.Opcode = opcode
 }
 
 func (h Header) EncodeHeader(endian binary.ByteOrder) ([]byte, error) {
@@ -36,6 +40,12 @@ func (h Header) EncodeHeader(endian binary.ByteOrder) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = binary.Write(newBuf, endian, h.Opcode)
+	if err != nil {
+		return nil, err
+	}
+
 	return utils.Clone(newBuf), nil
 }
 
@@ -45,7 +55,7 @@ func EncodeWithHeader(pkt PacketEncodeInterface, endian binary.ByteOrder) ([]byt
 		return nil, err
 	}
 
-	pkt.SetHeaderLen(uint16(len(bodyBuf)) + 6)
+	pkt.SetHeader(uint16(len(bodyBuf))+6, pkt.Opcode())
 
 	headerBuf, err := pkt.EncodeHeader(endian)
 	if err != nil {
@@ -53,4 +63,26 @@ func EncodeWithHeader(pkt PacketEncodeInterface, endian binary.ByteOrder) ([]byt
 	}
 
 	return append(headerBuf, bodyBuf...), nil
+}
+
+func DecodeHeader(buf []byte) (*Header, error) {
+	reader := bytes.NewReader(buf)
+	var header Header
+
+	err := binary.Read(reader, binary.BigEndian, &header.Len)
+	if err != nil {
+		return nil, err
+	}
+
+	err = binary.Read(reader, binary.LittleEndian, &header.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = binary.Read(reader, binary.BigEndian, &header.Opcode)
+	if err != nil {
+		return nil, err
+	}
+
+	return &header, nil
 }

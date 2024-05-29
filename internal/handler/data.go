@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"net"
@@ -25,15 +26,45 @@ func NewDataActor(conn net.Conn) actor.ActorHandle {
 			return err
 		}
 
+		_, eventActor := actor.NewActor("event", NewEventActor()).Start(context.Background())
+
 		for {
 			ln, err := conn.Read(buf)
 			if err != nil {
 				return err
 			}
 
+			if ln == 2 {
+				conn.Write([]byte{0, 2})
+				continue
+			}
+
 			fmt.Println("Has read from connection data:", string(buf[:ln]))
 			fmt.Println("length:", ln)
 
+			header, err := packets.DecodeHeader(buf)
+			if err != nil {
+				return err
+			}
+
+			buf = buf[8:]
+
+			fmt.Println("Header:", header)
+
+			if ln < int(header.Len) {
+				moreData := make([]byte, int(header.Len)-ln)
+				_, err := conn.Read(buf)
+				if err != nil {
+					return err
+				}
+
+				buf = append(buf, moreData...)
+			}
+
+			eventActor.Send(actor.ActorNone, IncomePacket{
+				Opcode: header.Opcode,
+				Data:   buf[:header.Len],
+			})
 		}
 	}
 }
