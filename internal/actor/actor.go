@@ -8,6 +8,10 @@ import (
 
 type PID string
 
+const (
+	ActorNone PID = ""
+)
+
 type ActorHandle func(pid PID, message any) any
 
 type ActorInterface interface {
@@ -44,7 +48,7 @@ func (a Actor) SendReceive(pid PID, message any) any {
 	return a.handle(pid, message)
 }
 
-func (a Actor) Start(ctx context.Context) PID {
+func (a Actor) Start(ctx context.Context) (PID, ActorInterface) {
 	pid := PID(uuid.New().String())
 
 	go func() {
@@ -60,7 +64,7 @@ func (a Actor) Start(ctx context.Context) PID {
 		}
 	}()
 
-	return pid
+	return pid, a
 }
 
 func (a Actor) Stop(ctx context.Context) {

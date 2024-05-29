@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 
 	"github.com/Nyarum/diho_gpkov2/internal/actor"
+	"github.com/Nyarum/diho_gpkov2/internal/packets"
 )
 
 func NewDataActor(conn net.Conn) actor.ActorHandle {
@@ -12,6 +14,16 @@ func NewDataActor(conn net.Conn) actor.ActorHandle {
 		defer conn.Close()
 
 		buf := make([]byte, 2048)
+
+		pktBuf, err := packets.EncodeWithHeader(packets.NewFirstTime(), binary.BigEndian)
+		if err != nil {
+			return err
+		}
+
+		_, err = conn.Write(pktBuf)
+		if err != nil {
+			return err
+		}
 
 		for {
 			ln, err := conn.Read(buf)

@@ -1,25 +1,12 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"net"
+	"context"
 	"os"
-)
 
-func handleConnection(conn net.Conn) {
-	defer conn.Close()
-	reader := bufio.NewReader(conn)
-	for {
-		message, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Connection closed")
-			return
-		}
-		fmt.Print("Message received:", string(message))
-		conn.Write([]byte("Message received\n"))
-	}
-}
+	"github.com/Nyarum/diho_gpkov2/internal/actor"
+	"github.com/Nyarum/diho_gpkov2/internal/handler"
+)
 
 func main() {
 	port := ":1973"
@@ -27,20 +14,10 @@ func main() {
 		port = os.Args[1]
 	}
 
-	listener, err := net.Listen("tcp", port)
-	if err != nil {
-		fmt.Println("Error creating listener:", err)
-		return
-	}
-	defer listener.Close()
-	fmt.Printf("Server is listening on port %s\n", port)
+	ctx := context.Background()
 
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Println("Error accepting connection:", err)
-			return
-		}
-		go handleConnection(conn)
-	}
+	_, listenerActor := actor.NewActor("listener", handler.NewListenerActor(ctx, port)).Start(ctx)
+	listenerActor.Send(actor.ActorNone, "ready")
+
+	select {}
 }

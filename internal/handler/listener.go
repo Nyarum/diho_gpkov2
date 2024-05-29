@@ -26,7 +26,8 @@ func NewListenerActor(ctx context.Context, port string) actor.ActorHandle {
 				return err
 			}
 
-			actor.NewActor("data", NewDataActor(conn)).Start(ctx)
+			_, dataActor := actor.NewActor("data", NewDataActor(conn)).Start(ctx)
+			dataActor.Send(actor.ActorNone, "ready")
 		}
 	}
 }

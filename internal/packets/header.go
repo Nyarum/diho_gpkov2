@@ -8,6 +8,7 @@ import (
 )
 
 type PacketEncodeInterface interface {
+	SetHeaderLen(len uint16)
 	EncodeHeader(endian binary.ByteOrder) ([]byte, error)
 	Encode(endian binary.ByteOrder) ([]byte, error)
 }
@@ -15,6 +16,10 @@ type PacketEncodeInterface interface {
 type Header struct {
 	Len uint16
 	ID  uint32
+}
+
+func (h *Header) SetHeaderLen(len uint16) {
+	h.Len = len
 }
 
 func (h Header) EncodeHeader(endian binary.ByteOrder) ([]byte, error) {
@@ -25,7 +30,9 @@ func (h Header) EncodeHeader(endian binary.ByteOrder) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(newBuf, binary.BigEndian, h.ID)
+
+	h.ID = 128
+	err = binary.Write(newBuf, binary.LittleEndian, h.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,12 +40,14 @@ func (h Header) EncodeHeader(endian binary.ByteOrder) ([]byte, error) {
 }
 
 func EncodeWithHeader(pkt PacketEncodeInterface, endian binary.ByteOrder) ([]byte, error) {
-	headerBuf, err := pkt.EncodeHeader(endian)
+	bodyBuf, err := pkt.Encode(endian)
 	if err != nil {
 		return nil, err
 	}
 
-	bodyBuf, err := pkt.Encode(endian)
+	pkt.SetHeaderLen(uint16(len(bodyBuf)) + 6)
+
+	headerBuf, err := pkt.EncodeHeader(endian)
 	if err != nil {
 		return nil, err
 	}
