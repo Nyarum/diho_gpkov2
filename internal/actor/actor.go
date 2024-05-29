@@ -7,17 +7,19 @@ import (
 )
 
 type PID string
+type ActorReady string
 
 const (
 	ActorNone PID = ""
 )
 
-type ActorHandle func(pid PID, message any) any
+type ActorHandle func(me ActorInterface, message any) any
 
 type ActorInterface interface {
-	Send(pid PID, message any)
-	SendReceive(pid PID, message any) any
+	Send(message any)
+	SendReceive(message any) any
 	Name() string
+	PID() PID
 }
 
 type Actor struct {
@@ -25,6 +27,7 @@ type Actor struct {
 	mailbox chan any
 	name    string
 	cancel  chan struct{}
+	pid     PID
 }
 
 func NewActor(name string, handle ActorHandle) Actor {
@@ -33,6 +36,7 @@ func NewActor(name string, handle ActorHandle) Actor {
 		name:    name,
 		handle:  handle,
 		cancel:  make(chan struct{}),
+		pid:     PID(uuid.New().String()),
 	}
 }
 
@@ -40,22 +44,24 @@ func (a Actor) Name() string {
 	return a.name
 }
 
-func (a Actor) Send(pid PID, message any) {
+func (a Actor) PID() PID {
+	return a.pid
+}
+
+func (a Actor) Send(message any) {
 	a.mailbox <- message
 }
 
-func (a Actor) SendReceive(pid PID, message any) any {
-	return a.handle(pid, message)
+func (a Actor) SendReceive(message any) any {
+	return a.handle(a, message)
 }
 
-func (a Actor) Start(ctx context.Context) (PID, ActorInterface) {
-	pid := PID(uuid.New().String())
-
+func (a Actor) Start(ctx context.Context) ActorInterface {
 	go func() {
 		for {
 			select {
 			case message := <-a.mailbox:
-				a.handle(pid, message)
+				a.handle(a, message)
 			case <-a.cancel:
 				return
 			case <-ctx.Done():
@@ -64,7 +70,7 @@ func (a Actor) Start(ctx context.Context) (PID, ActorInterface) {
 		}
 	}()
 
-	return pid, a
+	return a
 }
 
 func (a Actor) Stop(ctx context.Context) {

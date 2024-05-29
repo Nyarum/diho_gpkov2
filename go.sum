@@ -8,6 +8,8 @@ github.com/Nyarum/diho_bytes_generate v0.0.4 h1:V6TaBOpBv/CEvZH1T8xnTCNFRNQIA3rG
 github.com/Nyarum/diho_bytes_generate v0.0.4/go.mod h1:1tkWQVKvduz7KQKFTNlPqoXoqv2tGXSdOXfGVSX6OgA=
 github.com/Nyarum/diho_bytes_generate v0.0.5 h1:XYlJtguEVNqeJGbE5puOUJXJEt6uUhWWcmHBYiTDoh0=
 github.com/Nyarum/diho_bytes_generate v0.0.5/go.mod h1:1tkWQVKvduz7KQKFTNlPqoXoqv2tGXSdOXfGVSX6OgA=
+github.com/Nyarum/diho_bytes_generate v0.0.6 h1:3YrblEP//iZdKpKXo277bwEXVnNplzDvi5mvgLblHrA=
+github.com/Nyarum/diho_bytes_generate v0.0.6/go.mod h1:1tkWQVKvduz7KQKFTNlPqoXoqv2tGXSdOXfGVSX6OgA=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/valyala/bytebufferpool v1.0.0 h1:GqA5TC/0021Y/b9FG4Oi9Mr3q7XYx6KllzawFIhcdPw=

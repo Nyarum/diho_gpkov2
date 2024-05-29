@@ -7,4 +7,4 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0
 )
 
-require github.com/Nyarum/diho_bytes_generate v0.0.5
+require github.com/Nyarum/diho_bytes_generate v0.0.6

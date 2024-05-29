@@ -9,12 +9,13 @@ import (
 )
 
 type IncomePacket struct {
-	Opcode uint16
-	Data   []byte
+	Receiver actor.ActorInterface
+	Opcode   uint16
+	Data     []byte
 }
 
 func NewEventActor() actor.ActorHandle {
-	return func(pid actor.PID, message any) any {
+	return func(me actor.ActorInterface, message any) any {
 		incomePacket := message.(IncomePacket)
 
 		fmt.Println("Income packet:", incomePacket)
@@ -29,6 +30,18 @@ func NewEventActor() actor.ActorHandle {
 			}
 
 			fmt.Println("Auth packet:", authPkt)
+
+			pktBuf, err := packets.EncodeWithHeader(packets.NewCharacterScreen(), binary.BigEndian)
+			if err != nil {
+				fmt.Println("Error encoding cs packet:", err)
+				return err
+			}
+
+			incomePacket.Receiver.Send(sendToConn{
+				buf: pktBuf,
+			})
+		case 432:
+			incomePacket.Receiver.Send(closeConn{})
 		}
 
 		return nil

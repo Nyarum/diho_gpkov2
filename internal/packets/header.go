@@ -55,7 +55,7 @@ func EncodeWithHeader(pkt PacketEncodeInterface, endian binary.ByteOrder) ([]byt
 		return nil, err
 	}
 
-	pkt.SetHeader(uint16(len(bodyBuf))+6, pkt.Opcode())
+	pkt.SetHeader(uint16(len(bodyBuf))+8, pkt.Opcode())
 
 	headerBuf, err := pkt.EncodeHeader(endian)
 	if err != nil {

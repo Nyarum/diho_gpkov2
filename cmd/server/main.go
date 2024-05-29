@@ -16,8 +16,7 @@ func main() {
 
 	ctx := context.Background()
 
-	_, listenerActor := actor.NewActor("listener", handler.NewListenerActor(ctx, port)).Start(ctx)
-	listenerActor.Send(actor.ActorNone, "ready")
+	actor.NewActor("listener", handler.NewListenerActor(ctx, port)).Start(ctx).Send(actor.ActorReady(""))
 
 	select {}
 }
