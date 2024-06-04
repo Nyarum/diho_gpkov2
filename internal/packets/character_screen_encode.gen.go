@@ -39,3 +39,175 @@ func (p *CharacterScreen) Encode(ctx context.Context, endian binary.ByteOrder) (
 	}
 	return utils.Clone(newBuf), nil
 }
+func (p *Character) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.IsActive)
+	if err != nil {
+		return nil, err
+	}
+	err = utils.WriteStringNull(newBuf, p.Name)
+	if err != nil {
+		return nil, err
+	}
+	err = utils.WriteStringNull(newBuf, p.Job)
+	if err != nil {
+		return nil, err
+	}
+	err = utils.WriteStringNull(newBuf, p.Map)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(newBuf, endian, p.Level)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(newBuf, endian, p.LookSize)
+	if err != nil {
+		return nil, err
+	}
+	if encodeBuf, err := p.Look.Encode(ctx, endian); err != nil {
+		return nil, err
+	} else {
+		newBuf.Write(encodeBuf)
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *Look) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.Ver)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(newBuf, endian, p.TypeID)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range p.ItemGrids {
+		if encodeBuf, err := v.Encode(ctx, endian); err != nil {
+			return nil, err
+		} else {
+			newBuf.Write(encodeBuf)
+		}
+	}
+	err = binary.Write(newBuf, endian, p.Hair)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *ItemGrid) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.ID)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(newBuf, endian, p.Num)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range p.Endure {
+		if err = binary.Write(newBuf, endian, v); err != nil {
+			return nil, err
+		}
+	}
+	for _, v := range p.Energy {
+		if err = binary.Write(newBuf, endian, v); err != nil {
+			return nil, err
+		}
+	}
+	err = binary.Write(newBuf, endian, p.ForgeLv)
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range p.DBParams {
+		if err = binary.Write(newBuf, endian, v); err != nil {
+			return nil, err
+		}
+	}
+	for _, v := range p.InstAttrs {
+		if encodeBuf, err := v.Encode(ctx, endian); err != nil {
+			return nil, err
+		} else {
+			newBuf.Write(encodeBuf)
+		}
+	}
+	for _, v := range p.ItemAttrs {
+		if encodeBuf, err := v.Encode(ctx, endian); err != nil {
+			return nil, err
+		} else {
+			newBuf.Write(encodeBuf)
+		}
+	}
+	err = binary.Write(newBuf, endian, p.IsChange)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *ItemAttr) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.Attr)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(newBuf, endian, p.IsInit)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *InstAttr) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.ID)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(newBuf, endian, p.Value)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *CharacterCreate) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = utils.WriteStringNull(newBuf, p.Name)
+	if err != nil {
+		return nil, err
+	}
+	err = utils.WriteStringNull(newBuf, p.Map)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(newBuf, endian, p.LookSize)
+	if err != nil {
+		return nil, err
+	}
+	if encodeBuf, err := p.Look.Encode(ctx, endian); err != nil {
+		return nil, err
+	} else {
+		newBuf.Write(encodeBuf)
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *CharacterCreateReply) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.ErrorCode)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}

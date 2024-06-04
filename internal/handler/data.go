@@ -50,8 +50,6 @@ func NewDataActor(ctx context.Context, conn net.Conn) actor.ActorHandle {
 			}
 
 			go func() {
-				defer conn.Close()
-
 				buf := make([]byte, 2048)
 
 				for {

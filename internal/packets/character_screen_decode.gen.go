@@ -38,3 +38,164 @@ func (p *CharacterScreen) Decode(ctx context.Context, buf []byte, endian binary.
 	}
 	return nil
 }
+func (p *Character) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+	var err error
+	reader := bytes.NewReader(buf)
+	err = binary.Read(reader, endian, &p.IsActive)
+	if err != nil {
+		return err
+	}
+	p.Name, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	p.Job, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	p.Map, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(reader, endian, &p.Level)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(reader, endian, &p.LookSize)
+	if err != nil {
+		return err
+	}
+	if err = (&p.Look).Decode(ctx, buf, endian); err != nil {
+		return err
+	}
+	return nil
+}
+func (p *Look) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+	var err error
+	reader := bytes.NewReader(buf)
+	err = binary.Read(reader, endian, &p.Ver)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(reader, endian, &p.TypeID)
+	if err != nil {
+		return err
+	}
+	for k := range p.ItemGrids {
+		if err = (&p.ItemGrids[k]).Decode(ctx, buf, endian); err != nil {
+			return err
+		}
+	}
+	err = binary.Read(reader, endian, &p.Hair)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *ItemGrid) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+	var err error
+	reader := bytes.NewReader(buf)
+	err = binary.Read(reader, endian, &p.ID)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(reader, endian, &p.Num)
+	if err != nil {
+		return err
+	}
+	for k := range p.Endure {
+		var tempValue uint16
+		if err = binary.Read(reader, endian, &tempValue); err != nil {
+			return err
+		}
+		p.Endure[k] = tempValue
+	}
+	for k := range p.Energy {
+		var tempValue uint16
+		if err = binary.Read(reader, endian, &tempValue); err != nil {
+			return err
+		}
+		p.Energy[k] = tempValue
+	}
+	err = binary.Read(reader, endian, &p.ForgeLv)
+	if err != nil {
+		return err
+	}
+	for k := range p.DBParams {
+		var tempValue uint32
+		if err = binary.Read(reader, endian, &tempValue); err != nil {
+			return err
+		}
+		p.DBParams[k] = tempValue
+	}
+	for k := range p.InstAttrs {
+		if err = (&p.InstAttrs[k]).Decode(ctx, buf, endian); err != nil {
+			return err
+		}
+	}
+	for k := range p.ItemAttrs {
+		if err = (&p.ItemAttrs[k]).Decode(ctx, buf, endian); err != nil {
+			return err
+		}
+	}
+	err = binary.Read(reader, endian, &p.IsChange)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *ItemAttr) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+	var err error
+	reader := bytes.NewReader(buf)
+	err = binary.Read(reader, endian, &p.Attr)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(reader, endian, &p.IsInit)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *InstAttr) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+	var err error
+	reader := bytes.NewReader(buf)
+	err = binary.Read(reader, endian, &p.ID)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(reader, endian, &p.Value)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *CharacterCreate) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+	var err error
+	reader := bytes.NewReader(buf)
+	p.Name, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	p.Map, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	err = binary.Read(reader, endian, &p.LookSize)
+	if err != nil {
+		return err
+	}
+	if err = (&p.Look).Decode(ctx, buf, endian); err != nil {
+		return err
+	}
+	return nil
+}
+func (p *CharacterCreateReply) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+	var err error
+	reader := bytes.NewReader(buf)
+	err = binary.Read(reader, endian, &p.ErrorCode)
+	if err != nil {
+		return err
+	}
+	return nil
+}

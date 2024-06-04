@@ -28,6 +28,8 @@ func NewListenerActor(ctx context.Context, port string) actor.ActorHandle {
 					return err
 				}
 
+				fmt.Println("accepted connect")
+
 				actor.NewActor("data", NewDataActor(ctx, conn)).Start(ctx).Send(actor.ActorReady(""))
 			}
 		}

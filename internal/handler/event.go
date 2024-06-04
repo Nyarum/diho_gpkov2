@@ -18,13 +18,13 @@ type IncomePacket struct {
 func NewEventActor() actor.ActorHandle {
 	return func(me actor.ActorInterface, message any) any {
 		incomePacket := message.(IncomePacket)
+		ctx := context.Background()
 
 		fmt.Println("Income packet:", incomePacket)
 
-		switch incomePacket.Opcode {
-		case 431:
+		switch packets.Opcode(incomePacket.Opcode) {
+		case packets.OpcodeAuth:
 			authPkt := &packets.Auth{}
-			ctx := context.Background()
 
 			err := authPkt.Decode(ctx, incomePacket.Data, binary.BigEndian)
 			if err != nil {
@@ -43,8 +43,30 @@ func NewEventActor() actor.ActorHandle {
 			incomePacket.Receiver.Send(sendToConn{
 				buf: pktBuf,
 			})
-		case 432:
+		case packets.OpcodeCreateCharacter:
+			createCharPkt := packets.NewCharacterCreate()
+
+			err := createCharPkt.Decode(ctx, incomePacket.Data, binary.BigEndian)
+			if err != nil {
+				fmt.Println("Error decoding create character packet:", err)
+				return err
+			}
+
+			fmt.Println("Create character packet:", createCharPkt)
+
+			pktBuf, err := packets.EncodeWithHeader(ctx, packets.NewCharacterCreateReply(), binary.BigEndian)
+			if err != nil {
+				fmt.Println("Error encoding cs packet:", err)
+				return err
+			}
+
+			incomePacket.Receiver.Send(sendToConn{
+				buf: pktBuf,
+			})
+		case packets.OpcodeExit:
 			incomePacket.Receiver.Send(closeConn{})
+		default:
+			fmt.Println("Unknown opcode:", incomePacket.Opcode)
 		}
 
 		return nil
