@@ -2,6 +2,7 @@ package packets
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 
 	utils "github.com/Nyarum/diho_bytes_generate/utils"
@@ -12,7 +13,7 @@ type PacketEncodeInterface interface {
 	Opcode() uint16
 	SetHeader(len, opcode uint16)
 	EncodeHeader(endian binary.ByteOrder) ([]byte, error)
-	Encode(endian binary.ByteOrder) ([]byte, error)
+	Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error)
 }
 
 type Header struct {
@@ -49,8 +50,8 @@ func (h Header) EncodeHeader(endian binary.ByteOrder) ([]byte, error) {
 	return utils.Clone(newBuf), nil
 }
 
-func EncodeWithHeader(pkt PacketEncodeInterface, endian binary.ByteOrder) ([]byte, error) {
-	bodyBuf, err := pkt.Encode(endian)
+func EncodeWithHeader(ctx context.Context, pkt PacketEncodeInterface, endian binary.ByteOrder) ([]byte, error) {
+	bodyBuf, err := pkt.Encode(ctx, endian)
 	if err != nil {
 		return nil, err
 	}

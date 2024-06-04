@@ -8,3 +8,5 @@ require (
 )
 
 require github.com/Nyarum/diho_bytes_generate v0.0.6
+
+replace github.com/Nyarum/diho_bytes_generate => ../diho_bytes_generate

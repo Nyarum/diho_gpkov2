@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 
@@ -23,7 +24,9 @@ func NewEventActor() actor.ActorHandle {
 		switch incomePacket.Opcode {
 		case 431:
 			authPkt := &packets.Auth{}
-			err := authPkt.Decode(incomePacket.Data, binary.BigEndian)
+			ctx := context.Background()
+
+			err := authPkt.Decode(ctx, incomePacket.Data, binary.BigEndian)
 			if err != nil {
 				fmt.Println("Error decoding auth packet:", err)
 				return err
@@ -31,7 +34,7 @@ func NewEventActor() actor.ActorHandle {
 
 			fmt.Println("Auth packet:", authPkt)
 
-			pktBuf, err := packets.EncodeWithHeader(packets.NewCharacterScreen(), binary.BigEndian)
+			pktBuf, err := packets.EncodeWithHeader(ctx, packets.NewCharacterScreen(), binary.BigEndian)
 			if err != nil {
 				fmt.Println("Error encoding cs packet:", err)
 				return err

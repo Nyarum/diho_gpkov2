@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-//go:generate diho_bytes_generate first_time.go packets
+//go:generate diho_bytes_generate first_time.go
 type FirstTime struct {
 	Header `dbg:"ignore"`
 	Time   string

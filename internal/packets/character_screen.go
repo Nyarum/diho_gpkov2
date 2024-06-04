@@ -1,6 +1,6 @@
 package packets
 
-//go:generate diho_bytes_generate character_screen.go packets
+//go:generate diho_bytes_generate character_screen.go
 type CharacterScreen struct {
 	Header       `dbg:"ignore"`
 	ErrorCode    uint16

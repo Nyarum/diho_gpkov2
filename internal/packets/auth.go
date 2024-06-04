@@ -1,6 +1,6 @@
 package packets
 
-//go:generate diho_bytes_generate auth.go packets
+//go:generate diho_bytes_generate auth.go
 type Auth struct {
 	Key           []byte
 	Login         string

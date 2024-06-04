@@ -39,7 +39,7 @@ func NewDataActor(ctx context.Context, conn net.Conn) actor.ActorHandle {
 		case closeConn:
 			conn.Close()
 		case actor.ActorReady:
-			pktBuf, err := packets.EncodeWithHeader(packets.NewFirstTime(), binary.BigEndian)
+			pktBuf, err := packets.EncodeWithHeader(ctx, packets.NewFirstTime(), binary.BigEndian)
 			if err != nil {
 				return err
 			}
