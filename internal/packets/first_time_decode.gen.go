@@ -3,15 +3,14 @@
 package packets
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	utils "github.com/Nyarum/diho_bytes_generate/utils"
+	"io"
 )
 
-func (p *FirstTime) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *FirstTime) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	p.Time, err = utils.ReadStringNull(reader)
 	if err != nil {
 		return err

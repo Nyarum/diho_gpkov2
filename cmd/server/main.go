@@ -16,7 +16,19 @@ func main() {
 
 	ctx := context.Background()
 
-	actor.NewActor("listener", handler.NewListenerActor(ctx, port)).Start(ctx).Send(actor.ActorReady(""))
+	handlerStorageActor, handlerStorageReturn := handler.NewStorageActor(ctx)
+	if handlerStorageReturn.Err != nil {
+		panic(handlerStorageReturn.Err)
+	}
+	defer handlerStorageReturn.DB.Close()
+
+	actorStorage := actor.NewActor("storage", handlerStorageActor).Start(ctx)
+	actorStorage.Send(actor.ActorReadyMessage)
+
+	actor.ActorRegistry.Register(actorStorage)
+	defer actor.ActorRegistry.Unregister(actorStorage)
+
+	actor.NewActor("listener", handler.NewListenerActor(ctx, port)).Start(ctx).Send(actor.ActorReadyMessage)
 
 	select {}
 }

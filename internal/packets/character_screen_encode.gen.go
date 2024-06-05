@@ -62,10 +62,6 @@ func (p *Character) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	err = utils.WriteStringNull(newBuf, p.Map)
-	if err != nil {
-		return nil, err
-	}
 	err = binary.Write(newBuf, endian, p.Level)
 	if err != nil {
 		return nil, err
@@ -201,7 +197,7 @@ func (p *CharacterCreate) Encode(ctx context.Context, endian binary.ByteOrder) (
 	if err != nil {
 		return nil, err
 	}
-	if encodeBuf, err := p.Look.Encode(ctx, endian); err != nil {
+	if encodeBuf, err := p.Look.Encode(ctx, binary.LittleEndian); err != nil {
 		return nil, err
 	} else {
 		newBuf.Write(encodeBuf)

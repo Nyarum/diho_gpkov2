@@ -23,9 +23,61 @@ type closeConn struct {
 }
 
 func NewDataActor(ctx context.Context, conn net.Conn) actor.ActorHandle {
-	return func(me actor.ActorInterface, message any) any {
-		eventActor := actor.NewActor("event", NewEventActor()).Start(context.Background())
+	backgroundWork := func(me actor.ActorInterface) {
+		buf := make([]byte, 2048)
 
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("done")
+				return
+			default:
+				ln, err := conn.Read(buf)
+				if err != nil {
+					fmt.Println("Error reading from connection:", err)
+					return
+				}
+
+				if ln == 2 {
+					conn.Write([]byte{0, 2})
+					continue
+				}
+
+				fmt.Println("Has read from connection data:", string(buf[:ln]))
+				fmt.Println("length:", ln)
+
+				header, err := packets.DecodeHeader(buf)
+				if err != nil {
+					fmt.Println("Error decoding header:", err)
+					return
+				}
+
+				buf = buf[8:]
+
+				fmt.Println("Header:", header)
+
+				if ln < int(header.Len) {
+					moreData := make([]byte, int(header.Len)-ln)
+					_, err := conn.Read(buf)
+					if err != nil {
+						fmt.Println("Error reading from connection more data:", err)
+						return
+					}
+
+					buf = append(buf, moreData...)
+				}
+
+				me.Send(dataMessage{
+					header: *header,
+					buf:    buf[:header.Len],
+				})
+			}
+		}
+	}
+
+	eventActor := actor.NewActor("event", NewEventActor()).Start(context.Background())
+
+	return func(me actor.ActorInterface, message any) any {
 		switch v := message.(type) {
 		case dataMessage:
 			eventActor.Send(IncomePacket{
@@ -49,57 +101,7 @@ func NewDataActor(ctx context.Context, conn net.Conn) actor.ActorHandle {
 				return err
 			}
 
-			go func() {
-				buf := make([]byte, 2048)
-
-				for {
-					select {
-					case <-ctx.Done():
-						fmt.Println("done")
-						return
-					default:
-						ln, err := conn.Read(buf)
-						if err != nil {
-							fmt.Println("Error reading from connection:", err)
-							return
-						}
-
-						if ln == 2 {
-							conn.Write([]byte{0, 2})
-							continue
-						}
-
-						fmt.Println("Has read from connection data:", string(buf[:ln]))
-						fmt.Println("length:", ln)
-
-						header, err := packets.DecodeHeader(buf)
-						if err != nil {
-							fmt.Println("Error decoding header:", err)
-							return
-						}
-
-						buf = buf[8:]
-
-						fmt.Println("Header:", header)
-
-						if ln < int(header.Len) {
-							moreData := make([]byte, int(header.Len)-ln)
-							_, err := conn.Read(buf)
-							if err != nil {
-								fmt.Println("Error reading from connection more data:", err)
-								return
-							}
-
-							buf = append(buf, moreData...)
-						}
-
-						me.Send(dataMessage{
-							header: *header,
-							buf:    buf[:header.Len],
-						})
-					}
-				}
-			}()
+			go backgroundWork(me)
 		}
 
 		return nil

@@ -3,15 +3,14 @@
 package packets
 
 import (
-	"bytes"
 	"context"
 	"encoding/binary"
 	utils "github.com/Nyarum/diho_bytes_generate/utils"
+	"io"
 )
 
-func (p *CharacterScreen) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *CharacterScreen) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	err = binary.Read(reader, endian, &p.ErrorCode)
 	if err != nil {
 		return err
@@ -25,7 +24,7 @@ func (p *CharacterScreen) Decode(ctx context.Context, buf []byte, endian binary.
 		return err
 	}
 	for k := range p.Characters {
-		if err = (&p.Characters[k]).Decode(ctx, buf, endian); err != nil {
+		if err = (&p.Characters[k]).Decode(ctx, reader, endian); err != nil {
 			return err
 		}
 	}
@@ -43,9 +42,8 @@ func (p *CharacterScreen) Decode(ctx context.Context, buf []byte, endian binary.
 	}
 	return nil
 }
-func (p *Character) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *Character) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	err = binary.Read(reader, endian, &p.IsActive)
 	if err != nil {
 		return err
@@ -58,10 +56,6 @@ func (p *Character) Decode(ctx context.Context, buf []byte, endian binary.ByteOr
 	if err != nil {
 		return err
 	}
-	p.Map, err = utils.ReadStringNull(reader)
-	if err != nil {
-		return err
-	}
 	err = binary.Read(reader, endian, &p.Level)
 	if err != nil {
 		return err
@@ -70,14 +64,13 @@ func (p *Character) Decode(ctx context.Context, buf []byte, endian binary.ByteOr
 	if err != nil {
 		return err
 	}
-	if err = (&p.Look).Decode(ctx, buf, binary.LittleEndian); err != nil {
+	if err = (&p.Look).Decode(ctx, reader, binary.LittleEndian); err != nil {
 		return err
 	}
 	return nil
 }
-func (p *Look) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *Look) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	err = binary.Read(reader, endian, &p.Ver)
 	if err != nil {
 		return err
@@ -87,7 +80,7 @@ func (p *Look) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) 
 		return err
 	}
 	for k := range p.ItemGrids {
-		if err = (&p.ItemGrids[k]).Decode(ctx, buf, endian); err != nil {
+		if err = (&p.ItemGrids[k]).Decode(ctx, reader, endian); err != nil {
 			return err
 		}
 	}
@@ -97,9 +90,8 @@ func (p *Look) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) 
 	}
 	return nil
 }
-func (p *ItemGrid) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *ItemGrid) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	err = binary.Read(reader, endian, &p.ID)
 	if err != nil {
 		return err
@@ -134,12 +126,12 @@ func (p *ItemGrid) Decode(ctx context.Context, buf []byte, endian binary.ByteOrd
 		p.DBParams[k] = tempValue
 	}
 	for k := range p.InstAttrs {
-		if err = (&p.InstAttrs[k]).Decode(ctx, buf, endian); err != nil {
+		if err = (&p.InstAttrs[k]).Decode(ctx, reader, endian); err != nil {
 			return err
 		}
 	}
 	for k := range p.ItemAttrs {
-		if err = (&p.ItemAttrs[k]).Decode(ctx, buf, endian); err != nil {
+		if err = (&p.ItemAttrs[k]).Decode(ctx, reader, endian); err != nil {
 			return err
 		}
 	}
@@ -149,9 +141,8 @@ func (p *ItemGrid) Decode(ctx context.Context, buf []byte, endian binary.ByteOrd
 	}
 	return nil
 }
-func (p *ItemAttr) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *ItemAttr) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	err = binary.Read(reader, endian, &p.Attr)
 	if err != nil {
 		return err
@@ -162,9 +153,8 @@ func (p *ItemAttr) Decode(ctx context.Context, buf []byte, endian binary.ByteOrd
 	}
 	return nil
 }
-func (p *InstAttr) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *InstAttr) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	err = binary.Read(reader, endian, &p.ID)
 	if err != nil {
 		return err
@@ -175,9 +165,8 @@ func (p *InstAttr) Decode(ctx context.Context, buf []byte, endian binary.ByteOrd
 	}
 	return nil
 }
-func (p *CharacterCreate) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *CharacterCreate) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	p.Name, err = utils.ReadStringNull(reader)
 	if err != nil {
 		return err
@@ -190,14 +179,13 @@ func (p *CharacterCreate) Decode(ctx context.Context, buf []byte, endian binary.
 	if err != nil {
 		return err
 	}
-	if err = (&p.Look).Decode(ctx, buf, endian); err != nil {
+	if err = (&p.Look).Decode(ctx, reader, binary.LittleEndian); err != nil {
 		return err
 	}
 	return nil
 }
-func (p *CharacterCreateReply) Decode(ctx context.Context, buf []byte, endian binary.ByteOrder) error {
+func (p *CharacterCreateReply) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
 	var err error
-	reader := bytes.NewReader(buf)
 	err = binary.Read(reader, endian, &p.ErrorCode)
 	if err != nil {
 		return err

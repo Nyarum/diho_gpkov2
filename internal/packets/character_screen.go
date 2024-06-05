@@ -6,7 +6,7 @@ type CharacterScreen struct {
 	ErrorCode    uint16
 	Key          []byte
 	CharacterLen uint8
-	Characters   [3]Character
+	Characters   []Character
 	Pincode      uint8
 	Encryption   uint32
 	DWFlag       uint32
@@ -28,7 +28,6 @@ type Character struct {
 	IsActive bool
 	Name     string
 	Job      string
-	Map      string
 	Level    uint16
 	LookSize uint16
 	Look     Look `dbg:"little"`

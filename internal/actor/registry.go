@@ -1,26 +1,50 @@
 package actor
 
-import "sync"
+import (
+	"sync"
+)
+
+var (
+	ActorRegistry = NewRegistry()
+)
 
 type Registry struct {
-	actors sync.Map
+	actorsByName sync.Map
+	actorsByPID  sync.Map
 }
 
 func NewRegistry() *Registry {
 	return &Registry{}
 }
 
-func (r *Registry) Get(pid PID) ActorInterface {
-	if actor, ok := r.actors.Load(pid); ok {
+func (r *Registry) GetByPID(pid PID) ActorInterface {
+	if actor, ok := r.actorsByPID.Load(pid); ok {
 		return actor.(ActorInterface)
 	}
 	return nil
 }
 
-func (r *Registry) Register(pid PID, actor ActorInterface) {
-	r.actors.Store(pid, actor)
+func (r *Registry) GetByName(name string) []ActorInterface {
+	if actor, ok := r.actorsByName.Load(name); ok {
+		if actors, ok := actor.([]ActorInterface); ok {
+			return actors
+		}
+	}
+	return nil
 }
 
-func (r *Registry) Unregister(pid PID) {
-	r.actors.Delete(pid)
+func (r *Registry) Register(actor ActorInterface) {
+	r.actorsByPID.Store(actor.PID(), actor)
+
+	if actors, ok := r.actorsByName.LoadOrStore(actor.Name(), []ActorInterface{actor}); ok {
+		if actorsSlice, ok := actors.([]ActorInterface); ok {
+			actorsSlice = append(actorsSlice, actor)
+			r.actorsByName.Store(actor.Name(), actorsSlice)
+		}
+	}
+}
+
+func (r *Registry) Unregister(actor ActorInterface) {
+	r.actorsByPID.Delete(actor.PID())
+	r.actorsByName.Delete(actor.Name())
 }

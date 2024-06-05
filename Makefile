@@ -5,6 +5,9 @@ build:
 run: generate build
 	./server
 
+run/just: build
+	./server
+
 generate: 
 	go generate ./...
 

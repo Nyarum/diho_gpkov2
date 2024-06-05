@@ -13,6 +13,10 @@ const (
 	ActorNone PID = ""
 )
 
+var (
+	ActorReadyMessage = ActorReady("ready")
+)
+
 type ActorHandle func(me ActorInterface, message any) any
 
 type ActorInterface interface {
@@ -22,21 +26,28 @@ type ActorInterface interface {
 	PID() PID
 }
 
+type realtimeMessage struct {
+	receiveCh chan any
+	msg       any
+}
+
 type Actor struct {
-	handle  ActorHandle
-	mailbox chan any
-	name    string
-	cancel  chan struct{}
-	pid     PID
+	handle          ActorHandle
+	mailbox         chan any
+	realtimeMailbox chan realtimeMessage
+	name            string
+	cancel          chan struct{}
+	pid             PID
 }
 
 func NewActor(name string, handle ActorHandle) Actor {
 	return Actor{
-		mailbox: make(chan any, 1),
-		name:    name,
-		handle:  handle,
-		cancel:  make(chan struct{}),
-		pid:     PID(uuid.New().String()),
+		mailbox:         make(chan any, 1),
+		realtimeMailbox: make(chan realtimeMessage, 1),
+		name:            name,
+		handle:          handle,
+		cancel:          make(chan struct{}),
+		pid:             PID(uuid.New().String()),
 	}
 }
 
@@ -53,7 +64,13 @@ func (a Actor) Send(message any) {
 }
 
 func (a Actor) SendReceive(message any) any {
-	return a.handle(a, message)
+	realtimeMessage := realtimeMessage{
+		receiveCh: make(chan any),
+		msg:       message,
+	}
+
+	a.realtimeMailbox <- realtimeMessage
+	return <-realtimeMessage.receiveCh
 }
 
 func (a Actor) Start(ctx context.Context) ActorInterface {
@@ -62,6 +79,8 @@ func (a Actor) Start(ctx context.Context) ActorInterface {
 			select {
 			case message := <-a.mailbox:
 				a.handle(a, message)
+			case realtimeMessage := <-a.realtimeMailbox:
+				realtimeMessage.receiveCh <- a.handle(a, realtimeMessage.msg)
 			case <-a.cancel:
 				return
 			case <-ctx.Done():
