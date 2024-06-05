@@ -24,6 +24,11 @@ func (p *CharacterScreen) Decode(ctx context.Context, buf []byte, endian binary.
 	if err != nil {
 		return err
 	}
+	for k := range p.Characters {
+		if err = (&p.Characters[k]).Decode(ctx, buf, endian); err != nil {
+			return err
+		}
+	}
 	err = binary.Read(reader, endian, &p.Pincode)
 	if err != nil {
 		return err
@@ -65,7 +70,7 @@ func (p *Character) Decode(ctx context.Context, buf []byte, endian binary.ByteOr
 	if err != nil {
 		return err
 	}
-	if err = (&p.Look).Decode(ctx, buf, endian); err != nil {
+	if err = (&p.Look).Decode(ctx, buf, binary.LittleEndian); err != nil {
 		return err
 	}
 	return nil

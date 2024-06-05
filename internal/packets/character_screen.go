@@ -2,14 +2,14 @@ package packets
 
 //go:generate diho_bytes_generate character_screen.go
 type CharacterScreen struct {
-	Header       `json:"foo,omitempty,string" xml:"foo"`
+	Header       `dbg:"ignore"`
 	ErrorCode    uint16
 	Key          []byte
 	CharacterLen uint8
-	//Characters   []Character
-	Pincode    uint8
-	Encryption uint32
-	DWFlag     uint32
+	Characters   [3]Character
+	Pincode      uint8
+	Encryption   uint32
+	DWFlag       uint32
 }
 
 func NewCharacterScreen() *CharacterScreen {
@@ -31,7 +31,7 @@ type Character struct {
 	Map      string
 	Level    uint16
 	LookSize uint16
-	Look     Look
+	Look     Look `dbg:"little"`
 }
 
 type Look struct {
@@ -67,7 +67,7 @@ type CharacterCreate struct {
 	Name     string
 	Map      string
 	LookSize uint16
-	Look     Look
+	Look     Look `dbg:"little"`
 }
 
 func NewCharacterCreate() *CharacterCreate {

@@ -25,6 +25,13 @@ func (p *CharacterScreen) Encode(ctx context.Context, endian binary.ByteOrder) (
 	if err != nil {
 		return nil, err
 	}
+	for _, v := range p.Characters {
+		if encodeBuf, err := v.Encode(ctx, endian); err != nil {
+			return nil, err
+		} else {
+			newBuf.Write(encodeBuf)
+		}
+	}
 	err = binary.Write(newBuf, endian, p.Pincode)
 	if err != nil {
 		return nil, err
@@ -67,7 +74,7 @@ func (p *Character) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	if encodeBuf, err := p.Look.Encode(ctx, endian); err != nil {
+	if encodeBuf, err := p.Look.Encode(ctx, binary.LittleEndian); err != nil {
 		return nil, err
 	} else {
 		newBuf.Write(encodeBuf)
