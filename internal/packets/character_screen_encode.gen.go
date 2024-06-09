@@ -214,3 +214,71 @@ func (p *CharacterCreateReply) Encode(ctx context.Context, endian binary.ByteOrd
 	}
 	return utils.Clone(newBuf), nil
 }
+func (p *CharacterRemove) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = utils.WriteStringNull(newBuf, p.Name)
+	if err != nil {
+		return nil, err
+	}
+	err = utils.WriteStringNull(newBuf, p.Hash)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *CharacterRemoveReply) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.ErrorCode)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *CreatePincode) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = utils.WriteStringNull(newBuf, p.Hash)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *CreatePincodeReply) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.ErrorCode)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *UpdatePincode) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = utils.WriteStringNull(newBuf, p.OldHash)
+	if err != nil {
+		return nil, err
+	}
+	err = utils.WriteStringNull(newBuf, p.Hash)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}
+func (p *UpdatePincodeReply) Encode(ctx context.Context, endian binary.ByteOrder) ([]byte, error) {
+	newBuf := bytebufferpool.Get()
+	defer bytebufferpool.Put(newBuf)
+	var err error
+	err = binary.Write(newBuf, endian, p.ErrorCode)
+	if err != nil {
+		return nil, err
+	}
+	return utils.Clone(newBuf), nil
+}

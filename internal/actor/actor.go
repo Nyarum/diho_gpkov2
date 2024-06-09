@@ -3,15 +3,18 @@ package actor
 import (
 	"context"
 	"log/slog"
+	"runtime/debug"
 
 	"github.com/google/uuid"
 )
 
 type PID string
 type ActorReady string
+type ActorInternalState int
 
 const (
-	ActorNone PID = ""
+	ActorNone     PID                = ""
+	ActorRestored ActorInternalState = 1
 )
 
 var (
@@ -75,25 +78,42 @@ func (a Actor) SendReceive(message any) any {
 }
 
 func (a Actor) Start(ctx context.Context) ActorInterface {
-	go func() {
-		for {
-			select {
-			case message := <-a.mailbox:
-				if v := a.handle(a, message); v != nil {
-					errType, ok := v.(error)
-					if ok {
-						slog.Error("Can't handle message", "error", errType, "pid", a.pid, "message", message)
+	var actor func()
+
+	actor = func() {
+		handler := func() {
+			for {
+				select {
+				case message := <-a.mailbox:
+					if v := a.handle(a, message); v != nil {
+						errType, ok := v.(error)
+						if ok {
+							slog.Error("Can't handle message", "error", errType, "pid", a.pid, "message", message)
+						}
 					}
+				case realtimeMessage := <-a.realtimeMailbox:
+					realtimeMessage.receiveCh <- a.handle(a, realtimeMessage.msg)
+				case <-a.cancel:
+					return
+				case <-ctx.Done():
+					return
 				}
-			case realtimeMessage := <-a.realtimeMailbox:
-				realtimeMessage.receiveCh <- a.handle(a, realtimeMessage.msg)
-			case <-a.cancel:
-				return
-			case <-ctx.Done():
-				return
 			}
 		}
-	}()
+
+		recover := func() {
+			if r := recover(); r != nil {
+				slog.Warn("Supervisor recovered", "error", r, "stack", string(debug.Stack()))
+				a.mailbox <- ActorRestored
+				actor()
+			}
+		}
+
+		defer recover()
+		handler()
+	}
+
+	go actor()
 
 	return a
 }

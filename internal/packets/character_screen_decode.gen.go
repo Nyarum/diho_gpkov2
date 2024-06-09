@@ -192,3 +192,59 @@ func (p *CharacterCreateReply) Decode(ctx context.Context, reader io.Reader, end
 	}
 	return nil
 }
+func (p *CharacterRemove) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
+	var err error
+	p.Name, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	p.Hash, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *CharacterRemoveReply) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
+	var err error
+	err = binary.Read(reader, endian, &p.ErrorCode)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *CreatePincode) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
+	var err error
+	p.Hash, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *CreatePincodeReply) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
+	var err error
+	err = binary.Read(reader, endian, &p.ErrorCode)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *UpdatePincode) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
+	var err error
+	p.OldHash, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	p.Hash, err = utils.ReadStringNull(reader)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (p *UpdatePincodeReply) Decode(ctx context.Context, reader io.Reader, endian binary.ByteOrder) error {
+	var err error
+	err = binary.Read(reader, endian, &p.ErrorCode)
+	if err != nil {
+		return err
+	}
+	return nil
+}

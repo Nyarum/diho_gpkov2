@@ -8,6 +8,7 @@ type Auth struct {
 	MAC           string
 	IsCheat       uint16
 	ClientVersion uint16
+	PincodeHash   string `dbg:"ignore"`
 }
 
 func (a Auth) Opcode() uint16 {

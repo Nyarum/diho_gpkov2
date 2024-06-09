@@ -14,9 +14,8 @@ type CharacterScreen struct {
 
 func NewCharacterScreen() *CharacterScreen {
 	return &CharacterScreen{
-		Key:     []byte{0x7C, 0x35, 0x09, 0x19, 0xB2, 0x50, 0xD3, 0x49},
-		DWFlag:  12820,
-		Pincode: 1,
+		Key:    []byte{0x7C, 0x35, 0x09, 0x19, 0xB2, 0x50, 0xD3, 0x49},
+		DWFlag: 12820,
 	}
 }
 
@@ -73,10 +72,6 @@ func NewCharacterCreate() *CharacterCreate {
 	return &CharacterCreate{}
 }
 
-func (c CharacterCreate) Opcode() uint16 {
-	return 435
-}
-
 type CharacterCreateReply struct {
 	Header    `dbg:"ignore"`
 	ErrorCode uint16
@@ -88,4 +83,69 @@ func (c CharacterCreateReply) Opcode() uint16 {
 
 func NewCharacterCreateReply() *CharacterCreateReply {
 	return &CharacterCreateReply{}
+}
+
+type CharacterRemove struct {
+	Name string
+	Hash string
+}
+
+func NewCharacterRemove() *CharacterRemove {
+	return &CharacterRemove{}
+}
+
+type CharacterRemoveReply struct {
+	Header    `dbg:"ignore"`
+	ErrorCode uint16
+}
+
+func (c CharacterRemoveReply) Opcode() uint16 {
+	return 936
+}
+
+func NewCharacterRemoveReply() *CharacterRemoveReply {
+	return &CharacterRemoveReply{}
+}
+
+type CreatePincode struct {
+	Hash string
+}
+
+func NewCreatePincode() *CreatePincode {
+	return &CreatePincode{}
+}
+
+type CreatePincodeReply struct {
+	Header    `dbg:"ignore"`
+	ErrorCode uint16
+}
+
+func (c CreatePincodeReply) Opcode() uint16 {
+	return 941
+}
+
+func NewCreatePincodeReply() *CreatePincodeReply {
+	return &CreatePincodeReply{}
+}
+
+type UpdatePincode struct {
+	OldHash string
+	Hash    string
+}
+
+func NewUpdatePincode() *UpdatePincode {
+	return &UpdatePincode{}
+}
+
+type UpdatePincodeReply struct {
+	Header    `dbg:"ignore"`
+	ErrorCode uint16
+}
+
+func (c UpdatePincodeReply) Opcode() uint16 {
+	return 942
+}
+
+func NewUpdatePincodeReply() *UpdatePincodeReply {
+	return &UpdatePincodeReply{}
 }

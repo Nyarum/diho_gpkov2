@@ -7,10 +7,14 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0
 )
 
-require github.com/Nyarum/diho_bytes_generate v0.0.6
+require (
+	github.com/Nyarum/diho_bytes_generate v0.0.6
+	github.com/davecgh/go-spew v1.1.1
+	go.etcd.io/bbolt v1.3.10
+)
 
 require (
-	go.etcd.io/bbolt v1.3.10 // indirect
+	github.com/maruel/panicparse/v2 v2.3.1 // indirect
 	golang.org/x/sys v0.4.0 // indirect
 )
 

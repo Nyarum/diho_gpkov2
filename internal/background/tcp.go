@@ -2,8 +2,12 @@ package background
 
 import (
 	"context"
+	"encoding/binary"
+	"errors"
+	"io"
 	"log/slog"
 	"net"
+	"syscall"
 
 	"github.com/Nyarum/diho_gpkov2/internal/actor"
 	"github.com/Nyarum/diho_gpkov2/internal/actorhandler"
@@ -33,9 +37,24 @@ func NewTCP(ctx context.Context, addr string) error {
 
 			slog.Info("Accepted connect", "addr", conn.RemoteAddr())
 
+			pktBuf, err := packets.EncodeWithHeader(ctx, packets.NewFirstTime(), binary.BigEndian)
+			if err != nil {
+				return err
+			}
+
+			_, err = conn.Write(pktBuf)
+			if err != nil {
+				return err
+			}
+
 			go func() {
 				err := connection(ctx, conn)
 				if err != nil {
+					if isNetConnClosedErr(err) {
+						slog.Info("Connection closed", "addr", conn.RemoteAddr())
+						return
+					}
+
 					slog.Error("Connection error", "error", err)
 				}
 			}()
@@ -87,5 +106,17 @@ func connection(ctx context.Context, conn net.Conn) error {
 				Data:   buf,
 			})
 		}
+	}
+}
+
+func isNetConnClosedErr(err error) bool {
+	switch {
+	case
+		errors.Is(err, net.ErrClosed),
+		errors.Is(err, io.EOF),
+		errors.Is(err, syscall.EPIPE):
+		return true
+	default:
+		return false
 	}
 }

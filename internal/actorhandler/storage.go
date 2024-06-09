@@ -29,6 +29,16 @@ type SaveCharacter struct {
 	Data  packets.Character
 }
 
+type RemoveCharacter struct {
+	Login string
+	Name  string
+}
+
+type UpdatePincode struct {
+	Login string
+	Hash  string
+}
+
 type GetCharacters struct {
 	Login string
 }
@@ -61,16 +71,41 @@ func NewStorage(ctx context.Context) (actor.ActorHandle, StorageReturnType) {
 				slog.Info("save account", "name", v.Name)
 
 				storage.Accounts[v.Name] = v.Data
+
 			case GetAccount:
 				slog.Info("get account", "name", v.Name)
 
-				return storage.Accounts[v.Name]
+				account, ok := storage.Accounts[v.Name]
+				if !ok {
+					return nil
+				}
+
+				return account
+
+			case UpdatePincode:
+				slog.Info("update pincode", "login", v.Login, "hash", v.Hash)
+
+				if account, ok := storage.Accounts[v.Login]; ok {
+					account.PincodeHash = v.Hash
+
+					storage.Accounts[v.Login] = account
+				}
+
 			case SaveCharacter:
 				characters := append(storage.Characters[v.Login], v.Data)
 				storage.Characters[v.Login] = characters
 
 			case GetCharacters:
 				return storage.Characters[v.Login]
+
+			case RemoveCharacter:
+				if chars, ok := storage.Characters[v.Login]; ok {
+					for i, char := range chars {
+						if v.Name == char.Name {
+							storage.Characters[v.Login] = append(storage.Characters[v.Login][:i], storage.Characters[v.Login][i+1:]...)
+						}
+					}
+				}
 
 			case actor.ActorReady:
 				slog.Info("storage actor is ready")
