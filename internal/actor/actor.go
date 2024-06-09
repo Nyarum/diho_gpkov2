@@ -2,6 +2,7 @@ package actor
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -78,7 +79,12 @@ func (a Actor) Start(ctx context.Context) ActorInterface {
 		for {
 			select {
 			case message := <-a.mailbox:
-				a.handle(a, message)
+				if v := a.handle(a, message); v != nil {
+					errType, ok := v.(error)
+					if ok {
+						slog.Error("Can't handle message", "error", errType, "pid", a.pid, "message", message)
+					}
+				}
 			case realtimeMessage := <-a.realtimeMailbox:
 				realtimeMessage.receiveCh <- a.handle(a, realtimeMessage.msg)
 			case <-a.cancel:

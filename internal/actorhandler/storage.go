@@ -1,9 +1,9 @@
-package handler
+package actorhandler
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log/slog"
 
 	"github.com/Nyarum/diho_gpkov2/internal/actor"
 	"github.com/Nyarum/diho_gpkov2/internal/packets"
@@ -36,6 +36,53 @@ type GetCharacters struct {
 type Storage struct {
 	Accounts   map[string]packets.Auth
 	Characters map[string][]packets.Character
+}
+
+func NewStorage(ctx context.Context) (actor.ActorHandle, StorageReturnType) {
+	db, err := bbolt.Open("database.db", 0600, nil)
+	if err != nil {
+		return nil, StorageReturnType{
+			DB:  nil,
+			Err: err,
+		}
+	}
+
+	storage, err := GetFromLocalStorage(db)
+	if err != nil {
+		return nil, StorageReturnType{
+			DB:  nil,
+			Err: err,
+		}
+	}
+
+	return func(me actor.ActorInterface, message any) any {
+			switch v := message.(type) {
+			case SaveAccount:
+				slog.Info("save account", "name", v.Name)
+
+				storage.Accounts[v.Name] = v.Data
+			case GetAccount:
+				slog.Info("get account", "name", v.Name)
+
+				return storage.Accounts[v.Name]
+			case SaveCharacter:
+				characters := append(storage.Characters[v.Login], v.Data)
+				storage.Characters[v.Login] = characters
+
+			case GetCharacters:
+				return storage.Characters[v.Login]
+
+			case actor.ActorReady:
+				slog.Info("storage actor is ready")
+			}
+
+			SaveToLocalStorage(storage, db)
+
+			return nil
+		}, StorageReturnType{
+			DB:  db,
+			Err: err,
+		}
 }
 
 func SaveToLocalStorage(storage Storage, db *bbolt.DB) {
@@ -83,51 +130,4 @@ func GetFromLocalStorage(db *bbolt.DB) (Storage, error) {
 	}
 
 	return storage, nil
-}
-
-func NewStorageActor(ctx context.Context) (actor.ActorHandle, StorageReturnType) {
-	db, err := bbolt.Open("database.db", 0600, nil)
-	if err != nil {
-		return nil, StorageReturnType{
-			DB:  nil,
-			Err: err,
-		}
-	}
-
-	storage, err := GetFromLocalStorage(db)
-	if err != nil {
-		return nil, StorageReturnType{
-			DB:  nil,
-			Err: err,
-		}
-	}
-
-	return func(me actor.ActorInterface, message any) any {
-			switch v := message.(type) {
-			case SaveAccount:
-				fmt.Println("save account", v.Name)
-
-				storage.Accounts[v.Name] = v.Data
-			case GetAccount:
-				fmt.Println("Get account", v.Name)
-
-				return storage.Accounts[v.Name]
-			case SaveCharacter:
-				characters := append(storage.Characters[v.Login], v.Data)
-				storage.Characters[v.Login] = characters
-
-			case GetCharacters:
-				return storage.Characters[v.Login]
-
-			case actor.ActorReady:
-				fmt.Println("storage actor is ready")
-			}
-
-			SaveToLocalStorage(storage, db)
-
-			return nil
-		}, StorageReturnType{
-			DB:  db,
-			Err: err,
-		}
 }

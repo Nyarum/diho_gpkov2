@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 
 	"github.com/Nyarum/diho_gpkov2/internal/actor"
-	"github.com/Nyarum/diho_gpkov2/internal/handler"
+	"github.com/Nyarum/diho_gpkov2/internal/actorhandler"
+	"github.com/Nyarum/diho_gpkov2/internal/background"
 )
 
 func main() {
@@ -16,7 +18,7 @@ func main() {
 
 	ctx := context.Background()
 
-	handlerStorageActor, handlerStorageReturn := handler.NewStorageActor(ctx)
+	handlerStorageActor, handlerStorageReturn := actorhandler.NewStorage(ctx)
 	if handlerStorageReturn.Err != nil {
 		panic(handlerStorageReturn.Err)
 	}
@@ -28,7 +30,8 @@ func main() {
 	actor.ActorRegistry.Register(actorStorage)
 	defer actor.ActorRegistry.Unregister(actorStorage)
 
-	actor.NewActor("listener", handler.NewListenerActor(ctx, port)).Start(ctx).Send(actor.ActorReadyMessage)
-
-	select {}
+	err := background.NewTCP(ctx, port)
+	if err != nil {
+		slog.Error("Error", "error", err)
+	}
 }

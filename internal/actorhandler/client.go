@@ -1,27 +1,28 @@
-package handler
+package actorhandler
 
 import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
+	"log/slog"
+	"net"
 
 	"github.com/Nyarum/diho_gpkov2/internal/actor"
 	"github.com/Nyarum/diho_gpkov2/internal/packets"
 )
 
 type IncomePacket struct {
-	Receiver actor.ActorInterface
-	Opcode   uint16
-	Data     []byte
+	Opcode uint16
+	Data   []byte
 }
 
 type Event struct {
 	ActiveLogin string
 }
 
-func NewEventActor() actor.ActorHandle {
-	fmt.Println("test2")
+func NewClient(conn net.Conn) actor.ActorHandle {
 	ev := Event{
 		ActiveLogin: "",
 	}
@@ -30,7 +31,9 @@ func NewEventActor() actor.ActorHandle {
 		incomePacket := message.(IncomePacket)
 		ctx := context.Background()
 
-		fmt.Println("Income packet:", incomePacket)
+		slog.Info("Income packet", "opcode", incomePacket.Opcode)
+
+		var respPkt packets.PacketEncodeInterface
 
 		switch packets.Opcode(incomePacket.Opcode) {
 		case packets.OpcodeAuth:
@@ -38,11 +41,8 @@ func NewEventActor() actor.ActorHandle {
 
 			err := authPkt.Decode(ctx, bytes.NewReader(incomePacket.Data), binary.BigEndian)
 			if err != nil {
-				fmt.Println("Error decoding auth packet:", err)
 				return err
 			}
-
-			fmt.Println("Auth packet:", authPkt)
 
 			ev.ActiveLogin = authPkt.Login
 
@@ -60,29 +60,18 @@ func NewEventActor() actor.ActorHandle {
 			cs.CharacterLen = uint8(len(characters))
 			cs.Characters = characters
 
-			pktBuf, err := packets.EncodeWithHeader(ctx, cs, binary.BigEndian)
-			if err != nil {
-				fmt.Println("Error encoding cs packet:", err)
-				return err
-			}
+			respPkt = cs
 
-			fmt.Println("Active login:", ev.ActiveLogin)
-
-			incomePacket.Receiver.Send(sendToConn{
-				buf: pktBuf,
-			})
+			slog.Info("Active login", "activeLogin", ev.ActiveLogin)
 		case packets.OpcodeCreateCharacter:
 			createCharPkt := packets.NewCharacterCreate()
 
-			fmt.Println("Active login:", ev.ActiveLogin)
-
 			err := createCharPkt.Decode(ctx, bytes.NewReader(incomePacket.Data), binary.BigEndian)
 			if err != nil {
-				fmt.Println("Error decoding create character packet:", err)
 				return err
 			}
 
-			fmt.Println("Create character packet:", createCharPkt)
+			slog.Info("Create character", "name", createCharPkt.Name)
 
 			actor.SendToMultiple(actor.ActorRegistry.GetByName("storage"), SaveCharacter{
 				Login: ev.ActiveLogin,
@@ -96,19 +85,26 @@ func NewEventActor() actor.ActorHandle {
 				},
 			})
 
-			pktBuf, err := packets.EncodeWithHeader(ctx, packets.NewCharacterCreateReply(), binary.BigEndian)
-			if err != nil {
-				fmt.Println("Error encoding cs packet:", err)
-				return err
-			}
-
-			incomePacket.Receiver.Send(sendToConn{
-				buf: pktBuf,
-			})
+			respPkt = packets.NewCharacterCreateReply()
 		case packets.OpcodeExit:
-			incomePacket.Receiver.Send(closeConn{})
+			conn.Close()
+			return nil
 		default:
-			fmt.Println("Unknown opcode:", incomePacket.Opcode)
+			return fmt.Errorf("unknown opcode: %d", incomePacket.Opcode)
+		}
+
+		if respPkt == nil {
+			return errors.New("response packet is nil")
+		}
+
+		pktBuf, err := packets.EncodeWithHeader(ctx, respPkt, binary.BigEndian)
+		if err != nil {
+			return err
+		}
+
+		_, err = conn.Write(pktBuf)
+		if err != nil {
+			return err
 		}
 
 		return nil
