@@ -246,8 +246,8 @@ type CharacterLook struct {
 	SynType   uint8
 	TypeID    uint16
 	IsBoat    uint8
-	LookBoat  CharacterLookBoat
-	LookHuman CharacterLookHuman
+	LookBoat  CharacterLookBoat  `dbg:"IsBoat=1"`
+	LookHuman CharacterLookHuman `dbg:"IsBoat=0"`
 }
 
 /*
