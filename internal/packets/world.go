@@ -1,5 +1,29 @@
 package packets
 
+import "context"
+
+const (
+	SynLookSwitch uint8 = iota
+	SynLookChange
+)
+
+const (
+	SYN_KITBAG_INIT uint8 = iota
+	SYN_KITBAG_EQUIP
+	SYN_KITBAG_UNFIX
+	SYN_KITBAG_PICK
+	SYN_KITBAG_THROW
+	SYN_KITBAG_SWITCH
+	SYN_KITBAG_TRADE
+	SYN_KITBAG_FROM_NPC
+	SYN_KITBAG_TO_NPC
+	SYN_KITBAG_SYSTEM
+	SYN_KITBAG_FORGES
+	SYN_KITBAG_FORGEF
+	SYN_KITBAG_BANK
+	SYN_KITBAG_ATTR
+)
+
 //go:generate diho_bytes_generate world.go
 type CharacterBoat struct {
 	CharacterBase       CharacterBase
@@ -18,106 +42,39 @@ type CharacterShortcut struct {
 }
 
 type KitbagItem struct {
-	GridID       uint16
-	ID           uint16
-	Num          uint16
-	Endure       [2]uint16
-	Energy       [2]uint16
-	ForgeLevel   uint8
-	IsValid      bool
-	ItemDBInstID uint32
-	ItemDBForge  uint32
-	IsParams     bool
-	InstAttrs    [5]InstAttr
+	GridID        uint16
+	ID            uint16
+	Num           uint16
+	Endure        [2]uint16
+	Energy        [2]uint16
+	ForgeLevel    uint8
+	IsValid       bool
+	ItemDBInstID  uint32 `dbg:"ID==3988"`
+	ItemDBForge   uint32
+	BoatNull      uint32 `dbg:"ID==3988"`
+	ItemDBInstID2 uint32 `dbg:"ID!=3988"`
+	IsParams      bool
+	InstAttrs     [5]InstAttr
 }
 
-/*
-func (k *KitbagItem) Process(buf *[]byte, mode ...processor.Mode) {
-	defaultMode := processor.Write
-	if len(mode) > 0 {
-		defaultMode = mode[0]
+func (p *KitbagItem) Filter(ctx context.Context, name string) bool {
+	switch name {
+	case "GridID":
+		return p.GridID == 65535
+	case "ID":
+		return p.ID == 0
+	case "IsParams":
+		return !p.IsParams
 	}
 
-	p := processor.NewProcessor(defaultMode)
-	p.UInt16(buf, &k.GridID)
-
-	if k.GridID.Value == 65535 {
-		return
-	}
-
-	p.UInt16(buf, &k.ID)
-
-	if k.ID.Value > 0 {
-		p.UInt16(buf, &k.Num)
-
-		for v := range k.Endure {
-			p.UInt16(buf, &k.Endure[v])
-		}
-
-		for v := range k.Energy {
-			p.UInt16(buf, &k.Energy[v])
-		}
-
-		p.UInt8(buf, &k.ForgeLevel)
-		p.Bool(buf, &k.IsValid)
-
-		//if "item_info.type" == "boat" {
-		if k.ID.Value == 3988 {
-			p.UInt32(buf, &k.ItemDBInstID)
-		}
-
-		p.UInt32(buf, &k.ItemDBForge)
-
-		//if "item_info.type" == "boat" {
-		if k.ID.Value == 3988 {
-			v := uint32{}
-			p.UInt32(buf, &v)
-		} else {
-			p.UInt32(buf, &k.ItemDBInstID)
-		}
-
-		p.Bool(buf, &k.IsParams)
-
-		if k.IsParams.Value {
-			for ki := range k.InstAttrs {
-				k.InstAttrs[ki].Process(buf, mode...)
-			}
-		}
-	}
+	return false
 }
-*/
 
 type CharacterKitbag struct {
 	Type      uint8
-	KeybagNum uint16
+	KeybagNum uint16 `dbg:"Type==SYN_KITBAG_INIT"`
 	Items     []KitbagItem
 }
-
-/*
-func (c *CharacterKitbag) Process(buf *[]byte, mode ...processor.Mode) {
-	defaultMode := processor.Write
-	if len(mode) > 0 {
-		defaultMode = mode[0]
-	}
-
-	p := processor.NewProcessor(defaultMode)
-	p.UInt8(buf, &c.Type)
-
-	if c.Type.Value == types.SYN_KITBAG_INIT {
-		p.UInt16(buf, &c.KeybagNum)
-	}
-
-	c.KeybagNum.Value = c.KeybagNum.Value + 1
-
-	if len(c.Items) != int(c.KeybagNum.Value) {
-		c.Items = make([]KitbagItem, c.KeybagNum.Value)
-	}
-
-	for k := range c.Items {
-		c.Items[k].Process(buf, mode...)
-	}
-}
-*/
 
 type Attribute struct {
 	ID    uint8
@@ -193,49 +150,28 @@ type CharacterLookItemShow struct {
 }
 
 type CharacterLookItem struct {
+	SynType     uint8 `dbg:"ignore"`
 	ID          uint16
-	ItemSync    CharacterLookItemSync
-	ItemShow    CharacterLookItemShow
+	ItemSync    CharacterLookItemSync `dbg:"SynType==SynLookChange"`
+	ItemShow    CharacterLookItemShow `dbg:"SynType==SynLookSwitch"`
 	IsDBParams  uint8
 	DBParams    [2]uint32
 	IsInstAttrs uint8
 	InstAttrs   [5]InstAttr
 }
 
-/*
-func (c *CharacterLookItem) Process(buf *[]byte, synType uint8, mode ...processor.Mode) {
-	defaultMode := processor.Write
-	if len(mode) > 0 {
-		defaultMode = mode[0]
+func (p *CharacterLookItem) Filter(ctx context.Context, name string) bool {
+	switch name {
+	case "ID":
+		return p.ID == 0
+	case "IsDBParams":
+		return p.IsDBParams == 0
+	case "IsInstAttrs":
+		return p.IsInstAttrs == 0
 	}
 
-	p := processor.NewProcessor(defaultMode)
-	p.UInt16(buf, &c.ID)
-
-	if c.ID.Value != 0 {
-		if synType.Value == types.SynLookChange {
-			c.ItemSync.Process(buf, mode...)
-		} else {
-			c.ItemShow.Process(buf, mode...)
-			p.UInt8(buf, &c.IsDBParams)
-
-			if c.IsDBParams.Value != 0 {
-				for k := range c.DBParams {
-					p.UInt32(buf, &c.DBParams[k])
-				}
-
-				p.UInt8(buf, &c.IsInstAttrs)
-
-				if c.IsInstAttrs.Value != 0 {
-					for k := range c.InstAttrs {
-						c.InstAttrs[k].Process(buf, mode...)
-					}
-				}
-			}
-		}
-	}
+	return false
 }
-*/
 
 type CharacterLookHuman struct {
 	HairID   uint16
@@ -246,29 +182,9 @@ type CharacterLook struct {
 	SynType   uint8
 	TypeID    uint16
 	IsBoat    uint8
-	LookBoat  CharacterLookBoat  `dbg:"IsBoat=1"`
-	LookHuman CharacterLookHuman `dbg:"IsBoat=0"`
+	LookBoat  CharacterLookBoat  `dbg:"IsBoat==1"`
+	LookHuman CharacterLookHuman `dbg:"IsBoat==0"`
 }
-
-/*
-func (c *CharacterLook) Process(buf *[]byte, mode ...processor.Mode) {
-	defaultMode := processor.Write
-	if len(mode) > 0 {
-		defaultMode = mode[0]
-	}
-
-	p := processor.NewProcessor(defaultMode)
-	p.UInt8(buf, &c.SynType)
-	p.UInt16(buf, &c.TypeID)
-	p.UInt8(buf, &c.IsBoat)
-
-	if c.IsBoat.Value == 1 {
-		(&c.LookBoat).Process(buf, c.SynType, mode...)
-	} else {
-		(&c.LookHuman).Process(buf, c.SynType, mode...)
-	}
-}
-*/
 
 type EntityEvent struct {
 	EntityID   uint32

@@ -52,12 +52,21 @@ func (p *KitbagItem) Decode(ctx context.Context, reader io.Reader, endian binary
 	if err != nil {
 		return err
 	}
+	if p.Filter(ctx, "GridID") == true {
+		return err
+	}
 	err = binary.Read(reader, endian, &p.ID)
 	if err != nil {
 		return err
 	}
+	if p.Filter(ctx, "ID") == true {
+		return err
+	}
 	err = binary.Read(reader, endian, &p.Num)
 	if err != nil {
+		return err
+	}
+	if p.Filter(ctx, "Num") == true {
 		return err
 	}
 	for k := range p.Endure {
@@ -67,6 +76,9 @@ func (p *KitbagItem) Decode(ctx context.Context, reader io.Reader, endian binary
 		}
 		p.Endure[k] = tempValue
 	}
+	if p.Filter(ctx, "Endure") == true {
+		return err
+	}
 	for k := range p.Energy {
 		var tempValue uint16
 		if err = binary.Read(reader, endian, &tempValue); err != nil {
@@ -74,30 +86,71 @@ func (p *KitbagItem) Decode(ctx context.Context, reader io.Reader, endian binary
 		}
 		p.Energy[k] = tempValue
 	}
+	if p.Filter(ctx, "Energy") == true {
+		return err
+	}
 	err = binary.Read(reader, endian, &p.ForgeLevel)
 	if err != nil {
+		return err
+	}
+	if p.Filter(ctx, "ForgeLevel") == true {
 		return err
 	}
 	err = binary.Read(reader, endian, &p.IsValid)
 	if err != nil {
 		return err
 	}
-	err = binary.Read(reader, endian, &p.ItemDBInstID)
-	if err != nil {
+	if p.Filter(ctx, "IsValid") == true {
+		return err
+	}
+	if p.ID == 3988 {
+		err = binary.Read(reader, endian, &p.ItemDBInstID)
+		if err != nil {
+			return err
+		}
+	}
+	if p.Filter(ctx, "ItemDBInstID") == true {
 		return err
 	}
 	err = binary.Read(reader, endian, &p.ItemDBForge)
 	if err != nil {
 		return err
 	}
+	if p.Filter(ctx, "ItemDBForge") == true {
+		return err
+	}
+	if p.ID == 3988 {
+		err = binary.Read(reader, endian, &p.BoatNull)
+		if err != nil {
+			return err
+		}
+	}
+	if p.Filter(ctx, "BoatNull") == true {
+		return err
+	}
+	if p.ID != 3988 {
+		err = binary.Read(reader, endian, &p.ItemDBInstID2)
+		if err != nil {
+			return err
+		}
+	}
+	if p.Filter(ctx, "ItemDBInstID2") == true {
+		return err
+	}
 	err = binary.Read(reader, endian, &p.IsParams)
 	if err != nil {
+		return err
+	}
+	if p.Filter(ctx, "IsParams") == true {
 		return err
 	}
 	for k := range p.InstAttrs {
 		if err = (&p.InstAttrs[k]).Decode(ctx, reader, endian); err != nil {
 			return err
 		}
+	}
+	if p.Filter(ctx, "InstAttrs") == true {
+		return err
 	}
 	return nil
 }
@@ -107,9 +160,11 @@ func (p *CharacterKitbag) Decode(ctx context.Context, reader io.Reader, endian b
 	if err != nil {
 		return err
 	}
-	err = binary.Read(reader, endian, &p.KeybagNum)
-	if err != nil {
-		return err
+	if p.Type == SYN_KITBAG_INIT {
+		err = binary.Read(reader, endian, &p.KeybagNum)
+		if err != nil {
+			return err
+		}
 	}
 	for k := range p.Items {
 		if err = (&p.Items[k]).Decode(ctx, reader, endian); err != nil {
@@ -340,14 +395,30 @@ func (p *CharacterLookItem) Decode(ctx context.Context, reader io.Reader, endian
 	if err != nil {
 		return err
 	}
-	if err = (&p.ItemSync).Decode(ctx, reader, endian); err != nil {
+	if p.Filter(ctx, "ID") == true {
 		return err
 	}
-	if err = (&p.ItemShow).Decode(ctx, reader, endian); err != nil {
+	if p.SynType == SynLookChange {
+		if err = (&p.ItemSync).Decode(ctx, reader, endian); err != nil {
+			return err
+		}
+	}
+	if p.Filter(ctx, "ItemSync") == true {
+		return err
+	}
+	if p.SynType == SynLookSwitch {
+		if err = (&p.ItemShow).Decode(ctx, reader, endian); err != nil {
+			return err
+		}
+	}
+	if p.Filter(ctx, "ItemShow") == true {
 		return err
 	}
 	err = binary.Read(reader, endian, &p.IsDBParams)
 	if err != nil {
+		return err
+	}
+	if p.Filter(ctx, "IsDBParams") == true {
 		return err
 	}
 	for k := range p.DBParams {
@@ -357,14 +428,23 @@ func (p *CharacterLookItem) Decode(ctx context.Context, reader io.Reader, endian
 		}
 		p.DBParams[k] = tempValue
 	}
+	if p.Filter(ctx, "DBParams") == true {
+		return err
+	}
 	err = binary.Read(reader, endian, &p.IsInstAttrs)
 	if err != nil {
+		return err
+	}
+	if p.Filter(ctx, "IsInstAttrs") == true {
 		return err
 	}
 	for k := range p.InstAttrs {
 		if err = (&p.InstAttrs[k]).Decode(ctx, reader, endian); err != nil {
 			return err
 		}
+	}
+	if p.Filter(ctx, "InstAttrs") == true {
+		return err
 	}
 	return nil
 }
@@ -395,11 +475,15 @@ func (p *CharacterLook) Decode(ctx context.Context, reader io.Reader, endian bin
 	if err != nil {
 		return err
 	}
-	if err = (&p.LookBoat).Decode(ctx, reader, endian); err != nil {
-		return err
+	if p.IsBoat == 1 {
+		if err = (&p.LookBoat).Decode(ctx, reader, endian); err != nil {
+			return err
+		}
 	}
-	if err = (&p.LookHuman).Decode(ctx, reader, endian); err != nil {
-		return err
+	if p.IsBoat == 0 {
+		if err = (&p.LookHuman).Decode(ctx, reader, endian); err != nil {
+			return err
+		}
 	}
 	return nil
 }

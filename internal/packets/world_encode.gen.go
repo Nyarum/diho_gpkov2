@@ -68,43 +68,93 @@ func (p *KitbagItem) Encode(ctx context.Context, endian binary.ByteOrder) ([]byt
 	if err != nil {
 		return nil, err
 	}
+	if p.Filter(ctx, "GridID") == true {
+		return utils.Clone(newBuf), nil
+	}
 	err = binary.Write(newBuf, endian, p.ID)
 	if err != nil {
 		return nil, err
 	}
+	if p.Filter(ctx, "ID") == true {
+		return utils.Clone(newBuf), nil
+	}
 	err = binary.Write(newBuf, endian, p.Num)
 	if err != nil {
 		return nil, err
+	}
+	if p.Filter(ctx, "Num") == true {
+		return utils.Clone(newBuf), nil
 	}
 	for _, v := range p.Endure {
 		if err = binary.Write(newBuf, endian, v); err != nil {
 			return nil, err
 		}
 	}
+	if p.Filter(ctx, "Endure") == true {
+		return utils.Clone(newBuf), nil
+	}
 	for _, v := range p.Energy {
 		if err = binary.Write(newBuf, endian, v); err != nil {
 			return nil, err
 		}
 	}
+	if p.Filter(ctx, "Energy") == true {
+		return utils.Clone(newBuf), nil
+	}
 	err = binary.Write(newBuf, endian, p.ForgeLevel)
 	if err != nil {
 		return nil, err
+	}
+	if p.Filter(ctx, "ForgeLevel") == true {
+		return utils.Clone(newBuf), nil
 	}
 	err = binary.Write(newBuf, endian, p.IsValid)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(newBuf, endian, p.ItemDBInstID)
-	if err != nil {
-		return nil, err
+	if p.Filter(ctx, "IsValid") == true {
+		return utils.Clone(newBuf), nil
+	}
+	if p.ID == 3988 {
+		err = binary.Write(newBuf, endian, p.ItemDBInstID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if p.Filter(ctx, "ItemDBInstID") == true {
+		return utils.Clone(newBuf), nil
 	}
 	err = binary.Write(newBuf, endian, p.ItemDBForge)
 	if err != nil {
 		return nil, err
 	}
+	if p.Filter(ctx, "ItemDBForge") == true {
+		return utils.Clone(newBuf), nil
+	}
+	if p.ID == 3988 {
+		err = binary.Write(newBuf, endian, p.BoatNull)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if p.Filter(ctx, "BoatNull") == true {
+		return utils.Clone(newBuf), nil
+	}
+	if p.ID != 3988 {
+		err = binary.Write(newBuf, endian, p.ItemDBInstID2)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if p.Filter(ctx, "ItemDBInstID2") == true {
+		return utils.Clone(newBuf), nil
+	}
 	err = binary.Write(newBuf, endian, p.IsParams)
 	if err != nil {
 		return nil, err
+	}
+	if p.Filter(ctx, "IsParams") == true {
+		return utils.Clone(newBuf), nil
 	}
 	for _, v := range p.InstAttrs {
 		if encodeBuf, err := v.Encode(ctx, endian); err != nil {
@@ -112,6 +162,9 @@ func (p *KitbagItem) Encode(ctx context.Context, endian binary.ByteOrder) ([]byt
 		} else {
 			newBuf.Write(encodeBuf)
 		}
+	}
+	if p.Filter(ctx, "InstAttrs") == true {
+		return utils.Clone(newBuf), nil
 	}
 	return utils.Clone(newBuf), nil
 }
@@ -123,9 +176,11 @@ func (p *CharacterKitbag) Encode(ctx context.Context, endian binary.ByteOrder) (
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(newBuf, endian, p.KeybagNum)
-	if err != nil {
-		return nil, err
+	if p.Type == SYN_KITBAG_INIT {
+		err = binary.Write(newBuf, endian, p.KeybagNum)
+		if err != nil {
+			return nil, err
+		}
 	}
 	for _, v := range p.Items {
 		if encodeBuf, err := v.Encode(ctx, endian); err != nil {
@@ -382,28 +437,50 @@ func (p *CharacterLookItem) Encode(ctx context.Context, endian binary.ByteOrder)
 	if err != nil {
 		return nil, err
 	}
-	if encodeBuf, err := p.ItemSync.Encode(ctx, endian); err != nil {
-		return nil, err
-	} else {
-		newBuf.Write(encodeBuf)
+	if p.Filter(ctx, "ID") == true {
+		return utils.Clone(newBuf), nil
 	}
-	if encodeBuf, err := p.ItemShow.Encode(ctx, endian); err != nil {
-		return nil, err
-	} else {
-		newBuf.Write(encodeBuf)
+	if p.SynType == SynLookChange {
+		if encodeBuf, err := p.ItemSync.Encode(ctx, endian); err != nil {
+			return nil, err
+		} else {
+			newBuf.Write(encodeBuf)
+		}
+	}
+	if p.Filter(ctx, "ItemSync") == true {
+		return utils.Clone(newBuf), nil
+	}
+	if p.SynType == SynLookSwitch {
+		if encodeBuf, err := p.ItemShow.Encode(ctx, endian); err != nil {
+			return nil, err
+		} else {
+			newBuf.Write(encodeBuf)
+		}
+	}
+	if p.Filter(ctx, "ItemShow") == true {
+		return utils.Clone(newBuf), nil
 	}
 	err = binary.Write(newBuf, endian, p.IsDBParams)
 	if err != nil {
 		return nil, err
+	}
+	if p.Filter(ctx, "IsDBParams") == true {
+		return utils.Clone(newBuf), nil
 	}
 	for _, v := range p.DBParams {
 		if err = binary.Write(newBuf, endian, v); err != nil {
 			return nil, err
 		}
 	}
+	if p.Filter(ctx, "DBParams") == true {
+		return utils.Clone(newBuf), nil
+	}
 	err = binary.Write(newBuf, endian, p.IsInstAttrs)
 	if err != nil {
 		return nil, err
+	}
+	if p.Filter(ctx, "IsInstAttrs") == true {
+		return utils.Clone(newBuf), nil
 	}
 	for _, v := range p.InstAttrs {
 		if encodeBuf, err := v.Encode(ctx, endian); err != nil {
@@ -411,6 +488,9 @@ func (p *CharacterLookItem) Encode(ctx context.Context, endian binary.ByteOrder)
 		} else {
 			newBuf.Write(encodeBuf)
 		}
+	}
+	if p.Filter(ctx, "InstAttrs") == true {
+		return utils.Clone(newBuf), nil
 	}
 	return utils.Clone(newBuf), nil
 }
@@ -447,15 +527,19 @@ func (p *CharacterLook) Encode(ctx context.Context, endian binary.ByteOrder) ([]
 	if err != nil {
 		return nil, err
 	}
-	if encodeBuf, err := p.LookBoat.Encode(ctx, endian); err != nil {
-		return nil, err
-	} else {
-		newBuf.Write(encodeBuf)
+	if p.IsBoat == 1 {
+		if encodeBuf, err := p.LookBoat.Encode(ctx, endian); err != nil {
+			return nil, err
+		} else {
+			newBuf.Write(encodeBuf)
+		}
 	}
-	if encodeBuf, err := p.LookHuman.Encode(ctx, endian); err != nil {
-		return nil, err
-	} else {
-		newBuf.Write(encodeBuf)
+	if p.IsBoat == 0 {
+		if encodeBuf, err := p.LookHuman.Encode(ctx, endian); err != nil {
+			return nil, err
+		} else {
+			newBuf.Write(encodeBuf)
+		}
 	}
 	return utils.Clone(newBuf), nil
 }
