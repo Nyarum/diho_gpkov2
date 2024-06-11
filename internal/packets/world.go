@@ -118,7 +118,7 @@ type CharacterSkillBag struct {
 
 type CharacterAppendLook struct {
 	LookID  uint16
-	IsValid uint8
+	IsValid uint8 `dbg:"LookID!=0"`
 }
 
 type CharacterPK struct {

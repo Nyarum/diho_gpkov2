@@ -15,6 +15,7 @@ require (
 
 require (
 	github.com/maruel/panicparse/v2 v2.3.1 // indirect
+	github.com/orestl/hxx v0.0.0-20200318051706-de57e0fa16df // indirect
 	golang.org/x/sys v0.4.0 // indirect
 )
 

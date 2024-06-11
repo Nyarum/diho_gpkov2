@@ -333,9 +333,11 @@ func (p *CharacterAppendLook) Encode(ctx context.Context, endian binary.ByteOrde
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(newBuf, endian, p.IsValid)
-	if err != nil {
-		return nil, err
+	if p.LookID != 0 {
+		err = binary.Write(newBuf, endian, p.IsValid)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return utils.Clone(newBuf), nil
 }

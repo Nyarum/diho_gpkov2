@@ -103,7 +103,7 @@ func connection(ctx context.Context, conn net.Conn) error {
 
 			actorClient.Send(actorhandler.IncomePacket{
 				Opcode: header.Opcode,
-				Data:   buf,
+				Data:   buf[:header.Len],
 			})
 		}
 	}

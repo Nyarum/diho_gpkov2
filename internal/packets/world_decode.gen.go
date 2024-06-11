@@ -297,9 +297,11 @@ func (p *CharacterAppendLook) Decode(ctx context.Context, reader io.Reader, endi
 	if err != nil {
 		return err
 	}
-	err = binary.Read(reader, endian, &p.IsValid)
-	if err != nil {
-		return err
+	if p.LookID != 0 {
+		err = binary.Read(reader, endian, &p.IsValid)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
