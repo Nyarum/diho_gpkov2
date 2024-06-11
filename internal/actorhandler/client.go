@@ -28,11 +28,13 @@ func NewClient(conn net.Conn) actor.ActorHandle {
 	}
 
 	return func(me actor.ActorInterface, message any) any {
+		logger := slog.With("pid", me.PID())
+
 		switch v := message.(type) {
 		case actor.ActorInternalState:
 			if v == actor.ActorRestored {
 				conn.Close()
-				slog.Info("I'm restored")
+				logger.Info("I'm restored")
 			}
 
 			return nil
@@ -41,7 +43,9 @@ func NewClient(conn net.Conn) actor.ActorHandle {
 		incomePacket := message.(IncomePacket)
 		ctx := context.Background()
 
-		slog.Info("Income packet", "opcode", incomePacket.Opcode)
+		if _, ok := packets.OpcodesToName[packets.Opcode(incomePacket.Opcode)]; ok {
+			logger.Info("Income packet", "opcode", packets.OpcodesToName[packets.Opcode(incomePacket.Opcode)])
+		}
 
 		var respPkt packets.PacketEncodeInterface
 
@@ -53,34 +57,34 @@ func NewClient(conn net.Conn) actor.ActorHandle {
 				return err
 			}
 
-			slog.Info("Active login", "activeLogin", tempData.ActiveLogin)
+			logger.Info("Active login", "activeLogin", tempData.ActiveLogin)
 		case packets.OpcodeCreateCharacter:
 			var err error
-			respPkt, err = handleCreateCharacter(ctx, &tempData, incomePacket.Data)
+			respPkt, err = handleCreateCharacter(ctx, logger, &tempData, incomePacket.Data)
 			if err != nil {
 				return err
 			}
 		case packets.OpcodeRemoveCharacter:
 			var err error
-			respPkt, err = handleRemoveCharacter(ctx, &tempData, incomePacket.Data)
+			respPkt, err = handleRemoveCharacter(ctx, logger, &tempData, incomePacket.Data)
 			if err != nil {
 				return err
 			}
 		case packets.OpcodeCreatePincode:
 			var err error
-			respPkt, err = handleCreatePincode(ctx, &tempData, incomePacket.Data)
+			respPkt, err = handleCreatePincode(ctx, logger, &tempData, incomePacket.Data)
 			if err != nil {
 				return err
 			}
 		case packets.OpcodeChangePincode:
 			var err error
-			respPkt, err = handleUpdatePincode(ctx, &tempData, incomePacket.Data)
+			respPkt, err = handleUpdatePincode(ctx, logger, &tempData, incomePacket.Data)
 			if err != nil {
 				return err
 			}
 		case packets.OpcodeEnterGame:
 			var err error
-			respPkt, err = handleEnterGame(ctx, &tempData, incomePacket.Data)
+			respPkt, err = handleEnterGame(ctx, logger, &tempData, incomePacket.Data)
 			if err != nil {
 				return err
 			}
@@ -154,7 +158,7 @@ func handleAuth(ctx context.Context, tempData *TempData, data []byte) (packets.P
 	return cs, nil
 }
 
-func handleCreateCharacter(ctx context.Context, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
+func handleCreateCharacter(ctx context.Context, logger *slog.Logger, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
 	createCharPkt := packets.NewCharacterCreate()
 
 	err := createCharPkt.Decode(ctx, bytes.NewReader(data), binary.BigEndian)
@@ -162,7 +166,7 @@ func handleCreateCharacter(ctx context.Context, tempData *TempData, data []byte)
 		return nil, err
 	}
 
-	slog.Info("Create character", "name", createCharPkt.Name)
+	logger.Info("Create character", "name", createCharPkt.Name)
 
 	actor.SendToMultiple(actor.ActorRegistry.GetByName("storage"), SaveCharacter{
 		Login: tempData.ActiveLogin,
@@ -179,7 +183,7 @@ func handleCreateCharacter(ctx context.Context, tempData *TempData, data []byte)
 	return packets.NewCharacterCreateReply(), nil
 }
 
-func handleRemoveCharacter(ctx context.Context, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
+func handleRemoveCharacter(ctx context.Context, logger *slog.Logger, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
 	pkt := packets.NewCharacterRemove()
 
 	err := pkt.Decode(ctx, bytes.NewReader(data), binary.BigEndian)
@@ -187,7 +191,7 @@ func handleRemoveCharacter(ctx context.Context, tempData *TempData, data []byte)
 		return nil, err
 	}
 
-	slog.Info("Remove character", "pkt", pkt)
+	logger.Info("Remove character", "pkt", pkt)
 
 	actor.SendToMultiple(actor.ActorRegistry.GetByName("storage"), RemoveCharacter{
 		Login: tempData.ActiveLogin,
@@ -197,7 +201,7 @@ func handleRemoveCharacter(ctx context.Context, tempData *TempData, data []byte)
 	return packets.NewCharacterRemoveReply(), nil
 }
 
-func handleCreatePincode(ctx context.Context, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
+func handleCreatePincode(ctx context.Context, logger *slog.Logger, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
 	pkt := packets.NewCreatePincode()
 
 	err := pkt.Decode(ctx, bytes.NewReader(data), binary.BigEndian)
@@ -205,7 +209,7 @@ func handleCreatePincode(ctx context.Context, tempData *TempData, data []byte) (
 		return nil, err
 	}
 
-	slog.Info("Create pincode", "pkt", pkt)
+	logger.Info("Create pincode", "pkt", pkt)
 
 	actor.SendToMultiple(actor.ActorRegistry.GetByName("storage"), UpdatePincode{
 		Login: tempData.ActiveLogin,
@@ -215,7 +219,7 @@ func handleCreatePincode(ctx context.Context, tempData *TempData, data []byte) (
 	return packets.NewCreatePincodeReply(), nil
 }
 
-func handleUpdatePincode(ctx context.Context, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
+func handleUpdatePincode(ctx context.Context, logger *slog.Logger, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
 	pkt := packets.NewUpdatePincode()
 
 	err := pkt.Decode(ctx, bytes.NewReader(data), binary.BigEndian)
@@ -223,7 +227,7 @@ func handleUpdatePincode(ctx context.Context, tempData *TempData, data []byte) (
 		return nil, err
 	}
 
-	slog.Info("Update pincode", "pkt", pkt)
+	logger.Info("Update pincode", "pkt", pkt)
 
 	actor.SendToMultiple(actor.ActorRegistry.GetByName("storage"), UpdatePincode{
 		Login: tempData.ActiveLogin,
@@ -233,7 +237,7 @@ func handleUpdatePincode(ctx context.Context, tempData *TempData, data []byte) (
 	return packets.NewUpdatePincodeReply(), nil
 }
 
-func handleEnterGame(ctx context.Context, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
+func handleEnterGame(ctx context.Context, logger *slog.Logger, tempData *TempData, data []byte) (packets.PacketEncodeInterface, error) {
 	worldID := uint32(27012)
 
 	lookItems := [10]packets.CharacterLookItem{}

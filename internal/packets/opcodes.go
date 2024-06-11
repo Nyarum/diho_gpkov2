@@ -11,3 +11,13 @@ const (
 	OpcodeEnterGame       Opcode = 433
 	OpcodeExit            Opcode = 432
 )
+
+var OpcodesToName = map[Opcode]string{
+	OpcodeAuth:            "Auth",
+	OpcodeCreateCharacter: "CreateCharacter",
+	OpcodeRemoveCharacter: "RemoveCharacter",
+	OpcodeCreatePincode:   "CreatePincode",
+	OpcodeChangePincode:   "ChangePincode",
+	OpcodeEnterGame:       "EnterGame",
+	OpcodeExit:            "Exit",
+}
